@@ -1,6 +1,6 @@
 [package]
 name = "lambda-mcp-server"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "A production-ready lambda server providing local function as a service for LLMs via MCP"
 
@@ -36,6 +36,7 @@ nng = "1.0"  # For message passing
 # Configuration
 config = "0.13"
 dotenv = "0.15"
+dotenvy = "0.15"
 
 # UUID generation
 uuid = { version = "1.6", features = ["v4", "serde"] }
@@ -52,6 +53,9 @@ async-trait = "0.1"
 
 # CPU count detection
 num_cpus = "1.16"
+
+# Text utilities
+textwrap = "0.16"
 
 [dev-dependencies]
 tokio-test = "0.4"

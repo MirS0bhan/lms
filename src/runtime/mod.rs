@@ -1,62 +1,50 @@
 /// Runtime Module
 /// 
 /// Provides abstraction for pluggable runtimes (Python, Rust, Perl, Ruby, etc.)
-/// This phase defines the trait and basic structure; implementations come in Phase 2.
+/// Implementations for Python and Rust are included in Phase 2.
 
-use async_trait::async_trait;
+pub mod base;
+pub mod manager;
+pub mod python;
+pub mod rust;
+pub mod context;
+pub mod executor;
+
+pub use base::Runtime;
+pub use manager::RuntimeManager;
+pub use python::PythonRuntime;
+pub use rust::RustRuntime;
+pub use context::ExecutionContext;
+pub use executor::RuntimeExecutor;
+
 use serde_json::Value;
-use crate::error::Result;
 use std::collections::HashMap;
+use crate::error::Result;
 
-#[async_trait]
-pub trait Runtime: Send + Sync {
-    /// Get runtime name (e.g., "python", "rust")
-    fn name(&self) -> &str;
-
-    /// Get runtime version
-    fn version(&self) -> &str;
-
-    /// Execute a function with given arguments
-    async fn execute(
-        &self,
-        function_id: &str,
-        code: &str,
-        args: HashMap<String, Value>,
-    ) -> Result<Value>;
-
-    /// Validate function code before registration
-    fn validate_code(&self, code: &str) -> Result<()>;
-
-    /// Check if runtime is available/healthy
-    async fn health_check(&self) -> Result<()>;
+/// Runtime execution result
+#[derive(Debug, Clone)]
+pub struct ExecutionResult {
+    pub stdout: String,
+    pub stderr: String,
+    pub result: Value,
+    pub execution_time_ms: u128,
+    pub memory_used_bytes: u64,
 }
 
-pub struct RuntimeManager {
-    runtimes: HashMap<String, Box<dyn Runtime>>,
-}
-
-impl RuntimeManager {
-    pub fn new() -> Self {
+impl ExecutionResult {
+    pub fn success(result: Value, execution_time_ms: u128) -> Self {
         Self {
-            runtimes: HashMap::new(),
+            stdout: String::new(),
+            stderr: String::new(),
+            result,
+            execution_time_ms,
+            memory_used_bytes: 0,
         }
     }
 
-    pub fn register_runtime(&mut self, runtime: Box<dyn Runtime>) {
-        self.runtimes.insert(runtime.name().to_string(), runtime);
-    }
-
-    pub fn get_runtime(&self, name: &str) -> Option<&dyn Runtime> {
-        self.runtimes.get(name).map(|r| r.as_ref())
-    }
-
-    pub fn list_runtimes(&self) -> Vec<&str> {
-        self.runtimes.keys().map(|s| s.as_str()).collect()
-    }
-}
-
-impl Default for RuntimeManager {
-    fn default() -> Self {
-        Self::new()
+    pub fn with_output(mut self, stdout: String, stderr: String) -> Self {
+        self.stdout = stdout;
+        self.stderr = stderr;
+        self
     }
 }
